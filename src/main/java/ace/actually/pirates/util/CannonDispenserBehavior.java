@@ -1,8 +1,10 @@
 package ace.actually.pirates.util;
 import ace.actually.pirates.Pirates;
+import ace.actually.pirates.blocks.entity.CannonPrimingBlockEntity;
 import ace.actually.pirates.sound.ModSounds;
 import net.minecraft.block.DispenserBlock;
 import net.minecraft.block.dispenser.ItemDispenserBehavior;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ParticleTypes;
@@ -11,6 +13,7 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.math.BlockPointer;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Position;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
@@ -27,7 +30,17 @@ public abstract class CannonDispenserBehavior
         Position position = DispenserBlock.getOutputLocation(pointer);
         Direction direction = pointer.getBlockState().get(DispenserBlock.FACING);
         ProjectileEntity projectileEntity = this.createProjectile(world, position, stack);
-        projectileEntity.setVelocity(direction.getOffsetX(), (float)direction.getOffsetY() + 0.15f, direction.getOffsetZ(), this.getForce(), this.getVariation() / 2);
+
+        Vec3d velocity = new Vec3d(direction.getUnitVector());
+
+        BlockEntity entity = world.getBlockEntity(pointer.getPos().offset(direction.getOpposite()));
+        if (entity instanceof CannonPrimingBlockEntity cannonEntity) {
+            if (cannonEntity.aim != Vec3d.ZERO) velocity = cannonEntity.aim;
+        } else {
+            velocity.add(0, 0.15f, 0);
+        }
+
+        projectileEntity.setVelocity(velocity.getX(), velocity.getY(), velocity.getZ(), this.getForce(), this.getVariation() / 2);
         world.spawnEntity(projectileEntity);
 
         Ship ship = VSGameUtilsKt.getShipManagingPos(world, pointer.getPos());

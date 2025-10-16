@@ -5,16 +5,17 @@ import ace.actually.pirates.blocks.CannonPrimingBlock;
 import ace.actually.pirates.util.ConfigUtils;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.nbt.*;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.*;
-import net.minecraft.world.GameRules;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 public class CannonPrimingBlockEntity extends BlockEntity {
 
+    public Vec3d aim = Vec3d.ZERO;
     public int cooldown = 0;
     private int lastCooldown = 40;
     public final double randomRotation;
@@ -27,7 +28,6 @@ public class CannonPrimingBlockEntity extends BlockEntity {
     }
 
     public void tick(World world, BlockPos pos, BlockState state, CannonPrimingBlockEntity be) {
-
 
         if (!world.isClient && cooldown == 0) {
 
@@ -91,4 +91,22 @@ public class CannonPrimingBlockEntity extends BlockEntity {
         return  (VSGameUtilsKt.isBlockInShipyard(world, result.getBlockPos()));
     }
 
+    @Override
+    public void readNbt(NbtCompound nbt) {
+        super.readNbt(nbt);
+        this.cooldown = nbt.getInt("cooldown");
+        NbtList aimNbt = nbt.getList("aim", 6);
+        this.aim = new Vec3d(aimNbt.getDouble(0), aimNbt.getDouble(1), aimNbt.getDouble(2));
+    }
+
+    @Override
+    public void writeNbt(NbtCompound nbt) {
+        super.writeNbt(nbt);
+        nbt.putInt("cooldown", this.cooldown);
+        NbtList aimNbt = new NbtList();
+        aimNbt.add(NbtDouble.of(this.aim.x));
+        aimNbt.add(NbtDouble.of(this.aim.y));
+        aimNbt.add(NbtDouble.of(this.aim.z));
+        nbt.put("aim", aimNbt);
+    }
 }
